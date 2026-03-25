@@ -72,7 +72,7 @@
         fetch("https://api.frankfurter.app/latest?from=VND&to=EUR")
           .then(r => r.json())
           .then(d => { setRate(d.rates.EUR); setLoading(false); })
-          .catch(() => { setRate(1/27500); setErr(true); setLoading(false); });
+          .catch(() => { setRate(1/30500); setErr(true); setLoading(false); });
       }, []);
 
       const vnd = parseFloat(input.replace(/\./g,"").replace(",",".")) || 0;
@@ -86,7 +86,7 @@
               <div style={{fontSize:40}}>🇻🇳</div>
               <h1 style={{color:"#fff",margin:"8px 0 4px",fontSize:22,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.3)"}}>VND → EUR Rechner</h1>
               <p style={{color:"rgba(255,255,255,.85)",fontSize:13,margin:0}}>
-                {loading ? "Lade Wechselkurs…" : err ? "⚠️ Fallback-Kurs (~27.500 ₫ / €)" : `Aktueller Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫`}
+                {loading ? "Lade Wechselkurs…" : err ? "⚠️ Fallback-Kurs (~30.500 ₫ / €)" : `Aktueller Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫`}
               </p>
             </div>
 
