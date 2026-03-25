@@ -1,0 +1,22 @@
+{
+“name”: “VND → EUR Rechner”,
+“short_name”: “VND Rechner”,
+“description”: “Vietnamesische Dong in Euro umrechnen mit Trinkgeld-Vorschlägen”,
+“start_url”: “.”,
+“display”: “standalone”,
+“background_color”: “#c8102e”,
+“theme_color”: “#c8102e”,
+“orientation”: “portrait”,
+“icons”: [
+{
+“src”: “https://flagcdn.com/256x192/vn.png”,
+“sizes”: “192x192”,
+“type”: “image/png”
+},
+{
+“src”: “https://flagcdn.com/256x192/vn.png”,
+“sizes”: “512x512”,
+“type”: “image/png”
+}
+]
+}
