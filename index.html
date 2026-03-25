@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#c8102e"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="VND Rechner"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>VND → EUR Rechner</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const BANKNOTES = [500000,200000,100000,50000,20000,10000,5000,2000,1000];
+    const fVND = n => new Intl.NumberFormat("de-DE").format(n) + " ₫";
+    const fEUR = n => new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(n);
+    const r10k = n => Math.ceil(n/10000)*10000;
+
+    function roundNice(n) {
+      if (n <= 10000) {
+        for (const b of BANKNOTES) { if (n >= b) return Math.ceil(n/b)*b; }
+        return Math.ceil(n/1000)*1000;
+      }
+      return r10k(n);
+    }
+
+    function getTips(base) {
+      if (!base || base <= 0) return [];
+      const s = new Set();
+      s.add(roundNice(base));
+      s.add(r10k(base * 1.1));
+      s.add(r10k(base * 1.15));
+      s.add(r10k(base * 1.2));
+      const flat = base<50000?5000:base<150000?10000:base<400000?20000:base<1000000?50000:100000;
+      s.add(r10k(base + flat));
+      const a = [...s].sort((a,b) => a-b);
+      while (a.length < 5) a.push(r10k(a[a.length-1]*1.05));
+      return a.slice(0,5);
+    }
+
+    function getBills(total) {
+      let rem = total; const u = [];
+      for (const n of BANKNOTES) {
+        const c = Math.floor(rem/n);
+        if (c > 0) { u.push({n, c}); rem -= c*n; }
+      }
+      return u;
+    }
+
+    const LABELS = [
+      {icon:"↗️", label:"Aufrunden",  when:"Straßenessen, Bánh mì-Stand, einfaches Pho-Lokal"},
+      {icon:"💬", label:"10 % Tipp",  when:"Lokales Restaurant, Grab-Taxi, einfache Massage"},
+      {icon:"🍜", label:"15 % Tipp",  when:"Touristisches Restaurant, Stadtführung, Cyclo-Fahrer"},
+      {icon:"⭐", label:"20 % Tipp",  when:"Hotelrestaurant, besonders guter Service, private Tour"},
+      {icon:"🤝", label:"Pauschal",   when:"Hotelpersonal (Gepäck/Zimmer), kurze Hilfsleistung, Tuk-Tuk"},
+    ];
+
+    function App() {
+      const [input, setInput] = useState("");
+      const [rate, setRate]   = useState(null);
+      const [err, setErr]     = useState(false);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        fetch("https://api.frankfurter.app/latest?from=VND&to=EUR")
+          .then(r => r.json())
+          .then(d => { setRate(d.rates.EUR); setLoading(false); })
+          .catch(() => { setRate(1/27500); setErr(true); setLoading(false); });
+      }, []);
+
+      const vnd = parseFloat(input.replace(/\./g,"").replace(",",".")) || 0;
+      const eur = rate ? vnd * rate : 0;
+      const tips = getTips(vnd);
+
+      return (
+        <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#da2020,#c8102e 40%,#ffcd00)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"24px 16px",fontFamily:"'Segoe UI',sans-serif"}}>
+          <div style={{width:"100%",maxWidth:460}}>
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{fontSize:40}}>🇻🇳</div>
+              <h1 style={{color:"#fff",margin:"8px 0 4px",fontSize:22,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.3)"}}>VND → EUR Rechner</h1>
+              <p style={{color:"rgba(255,255,255,.85)",fontSize:13,margin:0}}>
+                {loading ? "Lade Wechselkurs…" : err ? "⚠️ Fallback-Kurs (~27.500 ₫ / €)" : `Aktueller Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫`}
+              </p>
+            </div>
+
+            <div style={{background:"#fff",borderRadius:20,padding:"24px 20px",boxShadow:"0 8px 32px rgba(0,0,0,.18)"}}>
+              <label style={{fontSize:12,fontWeight:600,color:"#888",letterSpacing:1,textTransform:"uppercase"}}>Betrag in Vietnamesischen Dong</label>
+              <div style={{position:"relative",marginTop:8,marginBottom:20}}>
+                <input type="number" min="0" value={input} onChange={e => setInput(e.target.value)}
+                  placeholder="z. B. 250000"
+                  style={{width:"100%",padding:"14px 48px 14px 16px",fontSize:22,fontWeight:700,border:"2px solid #e0e0e0",borderRadius:12,outline:"none",boxSizing:"border-box",color:"#1a1a1a"}}/>
+                <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:20,color:"#aaa"}}>₫</span>
+              </div>
+
+              <div style={{background:"linear-gradient(135deg,#c8102e,#e03535)",borderRadius:14,padding:"16px 20px",textAlign:"center",marginBottom:24,color:"#fff"}}>
+                <div style={{fontSize:12,opacity:.8,marginBottom:4}}>Entspricht ungefähr</div>
+                <div style={{fontSize:32,fontWeight:800}}>{vnd > 0 ? fEUR(eur) : "—"}</div>
+              </div>
+
+              {vnd > 0 && (<>
+                <div style={{fontSize:12,fontWeight:600,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>💡 Trinkgeld-Vorschläge</div>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {tips.map((tip, i) => (
+                    <div key={i} style={{background:"#fafafa",border:"2px solid #efefef",borderRadius:12,padding:"12px 14px"}}>
+                      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10}}>
+                        <div style={{flex:1}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                            <span style={{fontSize:15}}>{LABELS[i].icon}</span>
+                            <span style={{fontWeight:700,color:"#222",fontSize:14}}>{LABELS[i].label}</span>
+                            <span style={{fontSize:11,color:"#aaa"}}>(+{fVND(tip-vnd)})</span>
+                          </div>
+                          <div style={{fontSize:11,color:"#888",paddingLeft:22}}>{LABELS[i].when}</div>
+                        </div>
+                        <div style={{textAlign:"right",flexShrink:0}}>
+                          <div style={{fontWeight:700,color:"#c8102e",fontSize:15}}>{fVND(tip)}</div>
+                          <div style={{fontSize:11,color:"#aaa"}}>{fEUR(tip*rate)}</div>
+                        </div>
+                      </div>
+                      <div style={{marginTop:10,paddingTop:10,borderTop:"1px dashed #e8e8e8",display:"flex",flexWrap:"wrap",gap:6}}>
+                        {getBills(tip).map(({n,c}) => (
+                          <div key={n} style={{background:"#fff9e6",border:"1.5px solid #ffcd00",borderRadius:7,padding:"4px 10px",fontSize:12,fontWeight:600,color:"#555",display:"flex",gap:3}}>
+                            <span style={{color:"#b8860b"}}>{c}×</span><span>{fVND(n)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>)}
+            </div>
+            <p style={{color:"rgba(255,255,255,.6)",fontSize:11,textAlign:"center",marginTop:14}}>Wechselkurs via frankfurter.app · Trinkgeld ist in Vietnam freiwillig, aber willkommen 🙏</p>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    }
+  </script>
+
+</body>
+</html>
