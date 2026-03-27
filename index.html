@@ -62,17 +62,46 @@
       {icon:"🤝", label:"Pauschal",   when:"Hotelpersonal (Gepäck/Zimmer), kurze Hilfsleistung, Tuk-Tuk"},
     ];
 
+    const FALLBACK_RATE = 1/30500;
+    const RATE_KEY = "vnd_eur_rate";
+    const RATE_DATE_KEY = "vnd_eur_rate_date";
+
     function App() {
       const [input, setInput] = useState("");
       const [rate, setRate]   = useState(null);
-      const [err, setErr]     = useState(false);
+      const [rateSource, setRateSource] = useState("loading"); // "live" | "cached" | "fallback"
+      const [rateDate, setRateDate]     = useState("");
       const [loading, setLoading] = useState(true);
 
       useEffect(() => {
+        const storedRate = localStorage.getItem(RATE_KEY);
+        const storedDate = localStorage.getItem(RATE_DATE_KEY) || "";
+        if (storedRate) {
+          setRate(parseFloat(storedRate));
+          setRateDate(storedDate);
+          setRateSource("cached");
+          setLoading(false);
+        }
+
         fetch("https://api.frankfurter.app/latest?from=VND&to=EUR")
           .then(r => r.json())
-          .then(d => { setRate(d.rates.EUR); setLoading(false); })
-          .catch(() => { setRate(1/30500); setErr(true); setLoading(false); });
+          .then(d => {
+            const freshRate = d.rates.EUR;
+            const today = new Date().toLocaleDateString("de-DE");
+            localStorage.setItem(RATE_KEY, freshRate);
+            localStorage.setItem(RATE_DATE_KEY, today);
+            setRate(freshRate);
+            setRateDate(today);
+            setRateSource("live");
+            setLoading(false);
+          })
+          .catch(() => {
+            if (!storedRate) {
+              setRate(FALLBACK_RATE);
+              setRateSource("fallback");
+            }
+            setLoading(false);
+          });
       }, []);
 
       const vnd = parseFloat(input.replace(/\./g,"").replace(",",".")) || 0;
@@ -86,7 +115,10 @@
               <div style={{fontSize:40}}>🇻🇳</div>
               <h1 style={{color:"#fff",margin:"8px 0 4px",fontSize:22,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.3)"}}>VND → EUR Rechner</h1>
               <p style={{color:"rgba(255,255,255,.85)",fontSize:13,margin:0}}>
-                {loading ? "Lade Wechselkurs…" : err ? "⚠️ Fallback-Kurs (~30.500 ₫ / €)" : `Aktueller Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫`}
+                {loading ? "Lade Wechselkurs…"
+                : rateSource === "live"     ? `Aktueller Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫`
+                : rateSource === "cached"   ? `Gespeicherter Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫ (${rateDate || "unbekannt"})`
+                : `⚠️ Fallback-Kurs (~30.500 ₫ / €)`}
               </p>
             </div>
 
