@@ -1,4 +1,4 @@
-const CACHE = “vnd-rechner-v1”;
+const CACHE = “vnd-rechner-v2”;
 const ASSETS = [”./”, “./index.html”, “./manifest.json”];
 
 self.addEventListener(“install”, e => {
