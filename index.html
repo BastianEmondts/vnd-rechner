@@ -62,6 +62,97 @@
       {icon:"🤝", label:"Pauschal",   when:"Hotelpersonal (Gepäck/Zimmer), kurze Hilfsleistung, Tuk-Tuk"},
     ];
 
+    const PROGRAM = [
+      {
+        day: 11, weekday: "Samstag", date: "28.03.2026", city: "Hue",
+        meals: ["F"],
+        text: "Per Fahrradrikscha erkunden wir hinter den Mauern der Zitadelle die Überreste der Verbotenen Purpurnen Stadt. Beim Kaisergrab Minh Mang schlägt unser Forscherherz höher: Skulpturen, Pflanzen, Holzarbeiten. Nachmittags bleibt Zeit zum Shoppen oder um allein auf Entdeckertour zu gehen."
+      },
+      {
+        day: 12, weekday: "Sonntag", date: "29.03.2026", city: "Hue – Mekongdelta",
+        meals: ["F", "A"],
+        text: "Transportvielfalt nach Art des Landes: Vormittags Flug nach Saigon, dann per Bus weiter ins Mekongdelta: eine Reise zum Reis, dem Dollarbringer des Landes. Mit dem Holzboot fahren wir zu unserer urigen Lodge am Mekong, wo wir zwei Nächte bleiben."
+      },
+      {
+        day: 13, weekday: "Montag", date: "30.03.2026", city: "Mekongdelta",
+        meals: ["F", "A"],
+        text: "Frühstück unter Palmen mit starkem Vietnamkaffee! Danach geht's auf Entdeckertrip ins Delta. Per Boot natürlich. Wir winken badenden Kindern zu, gleiten an Bananenstauden und Wasserbüffeln vorbei. Per Fahrrad erkunden wir eine der Inseln und naschen uns auf der Obstplantage durch die frischen Köstlichkeiten des Landes: Mango, Rambutan, Longan. Abends sind wir zurück in unserer familiären Lodge und schwingen beim Mitkochen selbst den Löffel."
+      },
+      {
+        day: 14, weekday: "Dienstag", date: "31.03.2026", city: "Mekongdelta – Saigon",
+        meals: ["F"],
+        text: "Vormittags Rückfahrt nach Ho Chi Minh City. Die 300 Jahre junge Multikulti-Metropole, auch bekannt unter ihrem alten Namen Saigon, gilt als Boomtown Vietnams. Die Kathedrale Notre-Dame, das alte Postamt, Trubel im chinesischen Viertel Cholon – Haare werden auf offener Straße geschnitten, es gibt mindestens 5000 Gewürze und Heilkräuter, Lackarbeiten, Jadekunst und Holzschnitte. Insidertipps verrät Ihr Scout, anschließend Ausgehtipps für den freien Abend. Übernachtung im Zentrum von Saigon."
+      },
+      {
+        day: 15, weekday: "Mittwoch", date: "01.04.2026", city: "Saigon und Rückflug",
+        meals: ["F", "A"],
+        text: "Freizeit in Saigon oder Ausflug (55 €) zum Tunnelsystem von Cu Chi. Es diente dem Vietcong während des Vietnamkrieges als Unterschlupf – einige der Tunnel wurden extra für Touristen verbreitert, zum Glück! Gemeinsames Abschiedsessen und kurz vor Mitternacht Rückflug von Saigon nach Frankfurt (Flugdauer ca. 13 Std.)."
+      }
+    ];
+
+    const MEAL_LABELS = { F: "🌅 Frühstück", M: "🍽️ Mittagessen", A: "🌙 Abendessen" };
+
+    function parseProgramDate(dateStr) {
+      const [d, m, y] = dateStr.split(".");
+      return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    }
+
+    function getProgramStartIndex() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      for (let i = 0; i < PROGRAM.length; i++) {
+        const d = parseProgramDate(PROGRAM[i].date);
+        if (d >= today) return i;
+      }
+      return PROGRAM.length - 1;
+    }
+
+    function ProgramCarousel() {
+      const [idx, setIdx] = useState(() => getProgramStartIndex());
+      const entry = PROGRAM[idx];
+
+      return (
+        <div style={{background:"#fff",borderRadius:20,padding:"20px",boxShadow:"0 8px 32px rgba(0,0,0,.18)",marginBottom:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>🗺️ Tagesprogramm</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <button
+              onClick={() => setIdx(i => Math.max(0, i - 1))}
+              disabled={idx === 0}
+              style={{flexShrink:0,background:idx===0?"#f0f0f0":"linear-gradient(135deg,#c8102e,#e03535)",color:idx===0?"#bbb":"#fff",border:"none",borderRadius:10,width:36,height:36,fontSize:18,cursor:idx===0?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+              ‹
+            </button>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                <span style={{fontSize:13,fontWeight:700,color:"#c8102e"}}>Tag {entry.day}</span>
+                <span style={{fontSize:13,color:"#555",fontWeight:600}}>{entry.weekday}, {entry.date}</span>
+              </div>
+              <div style={{fontSize:15,fontWeight:700,color:"#1a1a1a",marginBottom:8}}>{entry.city}</div>
+              <p style={{fontSize:12,color:"#555",lineHeight:1.6,margin:"0 0 10px 0"}}>{entry.text}</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {entry.meals.map(m => (
+                  <span key={m} style={{background:"#fff9e6",border:"1.5px solid #ffcd00",borderRadius:7,padding:"3px 10px",fontSize:11,fontWeight:600,color:"#b8860b"}}>
+                    {MEAL_LABELS[m]}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => setIdx(i => Math.min(PROGRAM.length - 1, i + 1))}
+              disabled={idx === PROGRAM.length - 1}
+              style={{flexShrink:0,background:idx===PROGRAM.length-1?"#f0f0f0":"linear-gradient(135deg,#c8102e,#e03535)",color:idx===PROGRAM.length-1?"#bbb":"#fff",border:"none",borderRadius:10,width:36,height:36,fontSize:18,cursor:idx===PROGRAM.length-1?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+              ›
+            </button>
+          </div>
+          <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:14}}>
+            {PROGRAM.map((_, i) => (
+              <button key={i} onClick={() => setIdx(i)}
+                style={{width:i===idx?20:8,height:8,borderRadius:4,border:"none",background:i===idx?"#c8102e":"#ddd",cursor:"pointer",padding:0,transition:"width .2s"}}/>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     const HOTELS = {
       "19.03.2026": { name: "Milalux Cruise", phone: null,                  web: "https://www.milacruises.com/",    city: "Halongbucht", address: null },
       "20.03.2026": { name: "Milalux Cruise", phone: null,                  web: "https://www.milacruises.com/",    city: "Halongbucht", address: null },
@@ -174,6 +265,7 @@
             </div>
 
             {todayHotel && <HotelCard hotel={todayHotel} />}
+            <ProgramCarousel />
 
             <div style={{background:"#fff",borderRadius:20,padding:"24px 20px",boxShadow:"0 8px 32px rgba(0,0,0,.18)"}}>
               <label style={{fontSize:12,fontWeight:600,color:"#888",letterSpacing:1,textTransform:"uppercase"}}>Betrag in Vietnamesischen Dong</label>
