@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="theme-color" content="#c8102e"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-title" content="VND Rechner"/>
+  <meta name="apple-mobile-web-app-title" content="Marco Polo Vietnam Tour"/>
   <link rel="manifest" href="manifest.json"/>
-  <title>VND → EUR Rechner</title>
+  <title>Marco Polo Vietnam Tour</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -181,23 +181,61 @@
       return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
     }
 
-    function HotelCard({ hotel }) {
-      const mapsUrl = getMapsUrl(hotel);
+    const HOTEL_LIST = Object.entries(HOTELS)
+      .map(([date, hotel]) => ({ date, ...hotel }))
+      .sort((a, b) => parseProgramDate(a.date) - parseProgramDate(b.date));
+
+    function getHotelStartIndex() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      for (let i = 0; i < HOTEL_LIST.length; i++) {
+        if (parseProgramDate(HOTEL_LIST[i].date) >= today) return i;
+      }
+      return HOTEL_LIST.length - 1;
+    }
+
+    function HotelCarousel() {
+      const [idx, setIdx] = useState(() => getHotelStartIndex());
+      const entry = HOTEL_LIST[idx];
+      const mapsUrl = getMapsUrl(entry);
       return (
         <div style={{background:"#fff",borderRadius:20,padding:"20px",boxShadow:"0 8px 32px rgba(0,0,0,.18)",marginBottom:16}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>🏨 Hotel</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <button
+              onClick={() => setIdx(i => Math.max(0, i - 1))}
+              disabled={idx === 0}
+              style={{flexShrink:0,background:idx===0?"#f0f0f0":"linear-gradient(135deg,#c8102e,#e03535)",color:idx===0?"#bbb":"#fff",border:"none",borderRadius:10,width:36,height:36,fontSize:18,cursor:idx===0?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+              ‹
+            </button>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>🏨 Heutiges Hotel</div>
-              <div style={{fontSize:18,fontWeight:700,color:"#1a1a1a",marginBottom:2}}>{hotel.name}</div>
-              <div style={{fontSize:13,color:"#555"}}>{hotel.city}{hotel.address ? ` · ${hotel.address}` : ""}</div>
-              {hotel.phone && <div style={{fontSize:12,color:"#666",marginTop:6}}>📞 <a href={`tel:${hotel.phone}`} style={{color:"#555",textDecoration:"none"}}>{hotel.phone}</a></div>}
-              {hotel.web && <div style={{fontSize:12,marginTop:4}}>🌐 <a href={hotel.web} target="_blank" rel="noopener noreferrer" style={{color:"#c8102e",textDecoration:"none"}}>{hotel.web.replace(/^https?:\/\//,"")}</a></div>}
+              <div style={{fontSize:12,fontWeight:700,color:"#c8102e",marginBottom:4}}>{entry.date}</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:17,fontWeight:700,color:"#1a1a1a",marginBottom:2}}>{entry.name}</div>
+                  <div style={{fontSize:13,color:"#555"}}>{entry.city}{entry.address ? ` · ${entry.address}` : ""}</div>
+                  {entry.phone && <div style={{fontSize:12,color:"#666",marginTop:6}}>📞 <a href={`tel:${entry.phone}`} style={{color:"#555",textDecoration:"none"}}>{entry.phone}</a></div>}
+                  {entry.web && <div style={{fontSize:12,marginTop:4}}>🌐 <a href={entry.web} target="_blank" rel="noopener noreferrer" style={{color:"#c8102e",textDecoration:"none"}}>{entry.web.replace(/^https?:\/\//,"")}</a></div>}
+                </div>
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                  style={{flexShrink:0,background:"linear-gradient(135deg,#c8102e,#e03535)",color:"#fff",borderRadius:10,padding:"10px 14px",fontSize:12,fontWeight:700,textDecoration:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                  <span style={{fontSize:18}}>📍</span>
+                  <span>Maps</span>
+                </a>
+              </div>
             </div>
-            <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-              style={{flexShrink:0,background:"linear-gradient(135deg,#c8102e,#e03535)",color:"#fff",borderRadius:10,padding:"10px 14px",fontSize:12,fontWeight:700,textDecoration:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-              <span style={{fontSize:18}}>📍</span>
-              <span>Maps</span>
-            </a>
+            <button
+              onClick={() => setIdx(i => Math.min(HOTEL_LIST.length - 1, i + 1))}
+              disabled={idx === HOTEL_LIST.length - 1}
+              style={{flexShrink:0,background:idx===HOTEL_LIST.length-1?"#f0f0f0":"linear-gradient(135deg,#c8102e,#e03535)",color:idx===HOTEL_LIST.length-1?"#bbb":"#fff",border:"none",borderRadius:10,width:36,height:36,fontSize:18,cursor:idx===HOTEL_LIST.length-1?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+              ›
+            </button>
+          </div>
+          <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:14}}>
+            {HOTEL_LIST.map((_, i) => (
+              <button key={i} onClick={() => setIdx(i)}
+                style={{width:i===idx?20:8,height:8,borderRadius:4,border:"none",background:i===idx?"#c8102e":"#ddd",cursor:"pointer",padding:0,transition:"width .2s"}}/>
+            ))}
           </div>
         </div>
       );
@@ -248,23 +286,16 @@
       const vnd = parseFloat(input.replace(/\./g,"").replace(",",".")) || 0;
       const eur = rate ? vnd * rate : 0;
       const tips = getTips(vnd);
-      const todayHotel = HOTELS[getTodayKey()] || null;
 
       return (
         <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#da2020,#c8102e 40%,#ffcd00)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"24px 16px",fontFamily:"'Segoe UI',sans-serif"}}>
           <div style={{width:"100%",maxWidth:460}}>
             <div style={{textAlign:"center",marginBottom:24}}>
               <div style={{fontSize:40}}>🇻🇳</div>
-              <h1 style={{color:"#fff",margin:"8px 0 4px",fontSize:22,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.3)"}}>VND → EUR Rechner</h1>
-              <p style={{color:"rgba(255,255,255,.85)",fontSize:13,margin:0}}>
-                {loading ? "Lade Wechselkurs…"
-                : rateSource === "live"     ? `Aktueller Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫`
-                : rateSource === "cached"   ? `Gespeicherter Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫ (${rateDate || "unbekannt"})`
-                : `⚠️ Fallback-Kurs (~30.500 ₫ / €)`}
-              </p>
+              <h1 style={{color:"#fff",margin:"8px 0 4px",fontSize:22,fontWeight:700,textShadow:"0 1px 4px rgba(0,0,0,.3)"}}>Marco Polo Vietnam Tour</h1>
             </div>
 
-            {todayHotel && <HotelCard hotel={todayHotel} />}
+            <HotelCarousel />
             <ProgramCarousel />
 
             <div style={{background:"#fff",borderRadius:20,padding:"24px 20px",boxShadow:"0 8px 32px rgba(0,0,0,.18)"}}>
@@ -276,9 +307,15 @@
                 <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:20,color:"#aaa"}}>₫</span>
               </div>
 
-              <div style={{background:"linear-gradient(135deg,#c8102e,#e03535)",borderRadius:14,padding:"16px 20px",textAlign:"center",marginBottom:24,color:"#fff"}}>
+              <div style={{background:"linear-gradient(135deg,#c8102e,#e03535)",borderRadius:14,padding:"16px 20px",textAlign:"center",marginBottom:12,color:"#fff"}}>
                 <div style={{fontSize:12,opacity:.8,marginBottom:4}}>Entspricht ungefähr</div>
                 <div style={{fontSize:32,fontWeight:800}}>{vnd > 0 ? fEUR(eur) : "—"}</div>
+              </div>
+              <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginBottom:16}}>
+                {loading ? "Lade Wechselkurs…"
+                : rateSource === "live"     ? `Aktueller Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫`
+                : rateSource === "cached"   ? `Gespeicherter Kurs: 1 € ≈ ${new Intl.NumberFormat("de-DE").format(Math.round(1/rate))} ₫ (${rateDate || "unbekannt"})`
+                : `⚠️ Fallback-Kurs (~30.500 ₫ / €)`}
               </div>
 
               {vnd > 0 && (<>
